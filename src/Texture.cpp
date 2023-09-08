@@ -38,6 +38,10 @@ Texture::Texture(std::string texturePath, bool flip) : path(texturePath)
 
 }
 
+Texture::~Texture() {
+	return ;
+}
+
 Texture::Texture(Texture const &copy)
 {
 	*this = copy;

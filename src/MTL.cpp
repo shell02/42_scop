@@ -1,7 +1,7 @@
 #include "MTL.hpp"
 
 
-MTL::MTL() : diffuse(Texture("./assets/kitten.jpeg")), specular(Texture("./assets/white_spec.png"))
+MTL::MTL() : diffuse(Texture("./assets/kittens.jpg", true)), specular(Texture("./assets/white_spec.png"))
 {
 	ambient = Vector3(0.8f, 0.8f, 0.8f);
 	diff = Vector3(0.8f, 0.8f, 0.8f);

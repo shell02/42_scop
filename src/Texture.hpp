@@ -12,6 +12,7 @@ class Texture
 	public:
 		Texture(std::string texturePath, bool flip = false);
 		Texture(Texture const &copy);
+		~Texture();
 
 		Texture& operator=(Texture const& copy);
 

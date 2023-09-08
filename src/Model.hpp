@@ -28,6 +28,12 @@ class Model {
 
 	private:
 		int err;
+		float minX;
+		float minY;
+		float maxX;
+		float maxY;
+		float maxZ;
+		float minZ;
 		std::string dirPath;
 
 		std::vector<Mesh>	objects;
@@ -40,6 +46,6 @@ class Model {
 		Vector3 parseVec3(std::string line);
 		Vector3 parseTexC(std::string line);
 		Vector3 getFace(std::string line);
-		void parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> positions, std::vector<Vector3> normals, std::vector<Vector3> coords);
+		void parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords);
 
 };

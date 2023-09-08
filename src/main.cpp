@@ -127,7 +127,7 @@ int main()
 	// Texture specularMap("./assets/container2_specular.png");
 
 
-	Model model("./assets/42.obj");
+	Model model("./assets/gameboy.obj");
 
 	if (model.getErr()) {
 		gl_log_err("**ERROR** : Could not initialize model\n");
@@ -179,8 +179,9 @@ int main()
 		camera.setDeltaTime(deltaTime);
 
 		glEnable(GL_DEPTH_TEST);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		light.setLightPos(Vector3(sin(currentFrame) * 3.0f, 1.0f, cos(currentFrame) * 3.0f));
+		light.setLightPos(Vector3(3.0f, 3.0f, 3.0f));
 		light.setLightColor(Vector3(1.0f, 1.0f, 1.0f));
 
 		program.use();

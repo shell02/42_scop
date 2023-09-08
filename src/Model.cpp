@@ -61,7 +61,7 @@ float example[] = {
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
-Model::Model(std::string filename) : err(0)
+Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f), maxY(0.0f), maxZ(0.0f), minZ(0.0f)
 {
 	if (!checkFile(filename)) {
 		err = 1;
@@ -72,6 +72,8 @@ Model::Model(std::string filename) : err(0)
 	std::string line;
 	std::string opt;
 	int idx = 0;
+	int lineN = 0;
+	// int VN = 0;
 
 	std::vector<Vector3> positions;
 	std::vector<Vector3> normals;
@@ -79,7 +81,7 @@ Model::Model(std::string filename) : err(0)
 	std::map<std::string, MTL> texturesNames;
 	std::vector<unsigned int> faces;
 
-	std::map<int, std::vector<unsigned int>> indices;
+	std::map<int, unsigned int> indices;
 	std::vector<Vertex> vertices;
 	std::vector<MTL> textures;
 
@@ -88,7 +90,7 @@ Model::Model(std::string filename) : err(0)
 	if (file.is_open()) {
 		
 		while (getline(file, line)) {
-			// std::cout << line << std::endl;
+			++lineN;
 			if (line.find('#') != std::string::npos)
 				line.erase(line.find('#'));
 
@@ -98,12 +100,16 @@ Model::Model(std::string filename) : err(0)
 				if (opt == "o") {
 					// std::cout << "New Object" << std::endl;
 					if (vertices.size() != 0) {
-						indices.insert(std::make_pair(idx++, faces));
+						indices.insert(std::make_pair(idx++, faces.size()));
 						objects.push_back(Mesh(vertices, indices, textures));
 						faces.clear();
-						positions.clear();
-						coords.clear();
-						normals.clear();
+		std::cout << "End of File: Number of vertices: " << vertices.size() << std::endl;
+		std::cout << "End of File: Number of indices: " << indices.size() << std::endl;
+		std::cout << "End of File: Number of textures: " << textures.size() << std::endl;
+
+						// positions.clear();
+						// coords.clear();
+						// normals.clear();
 						vertices.clear();
 						indices.clear();
 						textures.clear();
@@ -126,6 +132,20 @@ Model::Model(std::string filename) : err(0)
 				else if (opt == "v") {
 					Vector3 pos = parseVec3(line);
 					positions.push_back(pos);
+					// std::cout << "Line: " << lineN << " V: " << positions.size() << std::endl;
+
+					if (maxX < positions[positions.size() - 1][0])
+						maxX = positions[positions.size() - 1][0];
+					if (minX > positions[positions.size() - 1][0])
+						minX = positions[positions.size() - 1][0];
+					if (maxY < positions[positions.size() - 1][1])
+						maxY = positions[positions.size() - 1][1];
+					if (minY > positions[positions.size() - 1][1])
+						minY = positions[positions.size() - 1][1];
+					if (maxZ < positions[positions.size() - 1][2])
+						maxZ = positions[positions.size() - 1][2];
+					if (minZ > positions[positions.size() - 1][2])
+						minZ = positions[positions.size() - 1][2];
 				}
 				else if (opt == "vn") {
 					Vector3 norm = parseVec3(line);
@@ -137,11 +157,9 @@ Model::Model(std::string filename) : err(0)
 				}
 				else if (opt == "usemtl") {
 					// std::cout << "Texture: " << getArg(line) << std::endl;
-					if (texturesNames.find(line) != texturesNames.end())
-						std::cout << "Found\n";
 					// faces.clear();
 					if (faces.size() != 0) {
-						indices.insert(std::make_pair(idx++, faces));
+						indices.insert(std::make_pair(idx++, faces.size()));
 						faces.clear();
 					}
 					line = getArg(line);
@@ -170,13 +188,34 @@ Model::Model(std::string filename) : err(0)
 			}
 		}
 		file.close();
+		indices.insert(std::make_pair(idx, faces.size()));
 		std::cout << "End of File: Number of vertices: " << vertices.size() << std::endl;
-		// std::cout << "End of File: Number of normals: " << indices.size() << std::endl;
-		// std::cout << "End of File: Number of coords: " << textures.size() << std::endl;
+		std::cout << "End of File: Number of indices: " << indices.size() << std::endl;
+		std::cout << "End of File: Number of textures: " << textures.size() << std::endl;
+
+		if (textures.size() == 0)
+			textures.push_back(MTL());
+
 		// std::cout << "End of File: Number of faces: " << faces.size() << std::endl;
-		indices.insert(std::make_pair(idx, faces));
 		objects.push_back(Mesh(vertices, indices, textures));
-		vertices.clear();
+
+		std::cout << "MaxX: " << maxX << " MinX: " << minX << " MaxY: " << maxY << " MinY: " << minY << " MaxZ: " << maxZ << " MinZ: " << minZ << std::endl;
+
+		float centerX = 0.0f;
+		float centerY = 0.0f;
+		float centerZ = 0.0f;
+
+		
+		centerX = (maxX + minX) / 2;
+		centerY = (maxY + minY) / 2;
+		centerZ = (maxZ + minZ) / 2;
+		// centerY = centerY / positions.size();
+		// centerZ = centerZ / positions.size();
+
+		for (size_t i = 0; i < objects.size(); i++) {
+			objects[i].normalizeV(maxX, maxY, maxZ, minX, minY, minZ);
+			objects[i].center(-centerX, -centerY, -centerZ);
+		}
 	}
 
 	
@@ -306,6 +345,7 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 	std::fstream file;
 	std::string opt;
 	std::string material;
+	bool diff = false;
 
 	file.open(filename);
 	if (file.is_open()) {
@@ -321,20 +361,24 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 				if (opt == "newmtl") {
 					MTL tmp;
 
+					if (textures.size() != 0 && diff == false) {
+						textures[material].setDiff(textures[material].getAmbient());
+					}
 					material = getArg(line);
 					textures.insert(std::make_pair(material, tmp));
-					std::cout << "New material: " << material << std::endl;
-					textures[material].setIsTextured(true);
+					// textures[material].setIsTextured(true);
+
 
 				}
 				else if (opt == "Ka") {
-					textures[material].setAmbient(parseVec3(rmOpt(line)));
+					textures[material].setAmbient(parseVec3(line));
 				}
 				else if (opt == "Kd") {
-					textures[material].setDiff(parseVec3(rmOpt(line)));
+					textures[material].setDiff(parseVec3(line));
+					diff = true;
 				}
 				else if (opt == "Ks") {
-					textures[material].setSpec(parseVec3(rmOpt(line)));
+					textures[material].setSpec(parseVec3(line));
 				}
 				else if (opt == "Ns") {
 					textures[material].setShiny(toFloat(rmOpt(line)));
@@ -425,7 +469,7 @@ Vector3 Model::getFace(std::string line) {
 	return Vector3(v1, v2, v3);
 }
 
-void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> positions, std::vector<Vector3> normals, std::vector<Vector3> coords)
+void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords)
 {
 	std::string face1 = getArg(line);
 	line = rmOpt(line);
@@ -451,6 +495,8 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	Vector3 v3 = getFace(face3);
 	Vector3 v4 = getFace(face4);
 
+
+
 	if (v1[0] == 0 || v2[0] == 0 || v3[0] == 0 || (face4.size() && v4[0] == 0)) {
 		gl_log_err("**ERROR**: Vertex Position can't be 0\n");
 		err = 1;
@@ -462,20 +508,85 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 		v3[0] > positions.size() ||
 		(face4.size() && v4[0] > positions.size())) {
 		gl_log_err("**ERROR**: Vertex position over the number of vertices declared\n");
-		std::cout << positions.max_size() << std::endl;
 		err = 1;
 		return ;
 	}
-	Vector3 norm = v2.subVector(v1).crossVector(v3.subVector(v1));
+
+	float min_x = positions[v1[0] - 1][0];
+	float min_y = positions[v1[0] - 1][1];
+	float min_z = positions[v1[0] - 1][2];
+	float max_x = positions[v1[0] - 1][0];
+	float max_y = positions[v1[0] - 1][1];
+	float max_z = positions[v1[0] - 1][2];
+
+	if (min_x > positions[v2[0] - 1][0])
+		min_x = positions[v2[0] - 1][0];
+	if (max_x < positions[v2[0] - 1][0])
+		max_x = positions[v2[0] - 1][0];
+	if (min_y > positions[v2[0] - 1][1])
+		min_y = positions[v2[0] - 1][1];
+	if (max_y < positions[v2[0] - 1][1])
+		max_y = positions[v2[0] - 1][1];
+	if (min_z > positions[v2[0] - 1][2])
+		min_z = positions[v2[0] - 1][2];
+	if (max_z < positions[v2[0] - 1][2])
+		max_z = positions[v2[0] - 1][2];
+
+	if (min_x > positions[v3[0] - 1][0])
+		min_x = positions[v3[0] - 1][0];
+	if (max_x < positions[v3[0] - 1][0])
+		max_x = positions[v3[0] - 1][0];
+	if (min_y > positions[v3[0] - 1][1])
+		min_y = positions[v3[0] - 1][1];
+	if (max_y < positions[v3[0] - 1][1])
+		max_y = positions[v3[0] - 1][1];
+	if (min_z > positions[v3[0] - 1][2])
+		min_z = positions[v3[0] - 1][2];
+	if (max_z < positions[v3[0] - 1][2])
+		max_z = positions[v3[0] - 1][2];
+
+	if (face4.size()) {
+		if (min_x > positions[v4[0] - 1][0])
+			min_x = positions[v4[0] - 1][0];
+		if (max_x < positions[v4[0] - 1][0])
+			max_x = positions[v4[0] - 1][0];
+		if (min_y > positions[v4[0] - 1][1])
+			min_y = positions[v4[0] - 1][1];
+		if (max_y < positions[v4[0] - 1][1])
+			max_y = positions[v4[0] - 1][1];
+		if (min_z > positions[v4[0] - 1][2])
+			min_z = positions[v4[0] - 1][2];
+		if (max_z < positions[v4[0] - 1][2])
+			max_z = positions[v4[0] - 1][2];
+	}
+
+	// std::cout << "Max_x: " << max_x << " Min_x: " << min_x << " Max_y: " << max_y << " Min_y: " << min_y << std::endl;
+
+	Vector3 norm = positions[v2[0] - 1].subVector(positions[v1[0] - 1]).crossVector(positions[v3[0] - 1].subVector(positions[v1[0] - 1]));
 	norm = norm.unit();
 	
 	Vertex tmp;
 	
 	tmp.Position = positions[v1[0] - 1];
 	if (v1[1] == 0 || v1[1] > coords.size()) {
-		Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-		tmp.TexCoords[0] = tex[0];
-		tmp.TexCoords[1] = tex[1];
+		float tmpX;
+		if (max_x - min_x != 0)
+			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+		else
+			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+		float tmpY;
+		if (max_y - min_y != 0)
+			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+		else
+			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+		// if (!tmpX)
+		// 	tmpX = 0.0f;
+		// if (!tmpY)
+		// 	tmpY = 0.0f;
+		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+		tmp.TexCoords[0] = tex[1];
+		tmp.TexCoords[1] = tex[0];
 	} else {
 		tmp.TexCoords[0] = coords[v1[1] - 1][0];
 		tmp.TexCoords[1] = coords[v1[1] - 1][1];
@@ -490,9 +601,24 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 
 	tmp.Position = positions[v2[0] - 1];
 	if (v2[1] == 0 || v2[1] > coords.size()) {
-		Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-		tmp.TexCoords[0] = tex[0];
-		tmp.TexCoords[1] = tex[1];
+		float tmpX;
+		if (max_x - min_x != 0)
+			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+		else
+			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+		float tmpY;
+		if (max_y - min_y != 0)
+			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+		else
+			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+		// if (!tmpX)
+		// 	tmpX = 0.0f;
+		// if (!tmpY)
+		// 	tmpY = 0.0f;
+		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+		tmp.TexCoords[0] = tex[1];
+		tmp.TexCoords[1] = tex[0];
 	} else {
 		tmp.TexCoords[0] = coords[v2[1] - 1][0];
 		tmp.TexCoords[1] = coords[v2[1] - 1][1];
@@ -507,9 +633,24 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	
 	tmp.Position = positions[v3[0] - 1];
 	if (v3[1] == 0 || v3[1] > coords.size()) {
-		Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-		tmp.TexCoords[0] = tex[0];
-		tmp.TexCoords[1] = tex[1];
+		float tmpX;
+		if (max_x - min_x != 0)
+			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+		else
+			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+		float tmpY;
+		if (max_y - min_y != 0)
+			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+		else
+			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+		// if (!tmpX)
+		// 	tmpX = 0.0f;
+		// if (!tmpY)
+		// 	tmpY = 0.0f;
+		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+		tmp.TexCoords[0] = tex[1];
+		tmp.TexCoords[1] = tex[0];
 	} else {
 		tmp.TexCoords[0] = coords[v3[1] - 1][0];
 		tmp.TexCoords[1] = coords[v3[1] - 1][1];
@@ -526,9 +667,24 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 		
 		tmp.Position = positions[v3[0] - 1];
 		if (v3[1] == 0 || v3[1] > coords.size()) {
-			Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-			tmp.TexCoords[0] = tex[0];
-			tmp.TexCoords[1] = tex[1];
+			float tmpX;
+			if (max_x - min_x != 0)
+				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+			else
+				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+			float tmpY;
+			if (max_y - min_y != 0)
+				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+			else
+				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+			if (!tmpX)
+				tmpX = 0.0f;
+			if (!tmpY)
+				tmpY = 0.0f;
+			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+			tmp.TexCoords[0] = tex[1];
+			tmp.TexCoords[1] = tex[0];
 		} else {
 			tmp.TexCoords[0] = coords[v3[1] - 1][0];
 			tmp.TexCoords[1] = coords[v3[1] - 1][1];
@@ -542,9 +698,24 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 
 		tmp.Position = positions[v4[0] - 1];
 		if (v4[1] == 0 || v4[1] > coords.size()) {
-			Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-			tmp.TexCoords[0] = tex[0];
-			tmp.TexCoords[1] = tex[1];
+			float tmpX;
+			if (max_x - min_x != 0)
+				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+			else
+				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+			float tmpY;
+			if (max_y - min_y != 0)
+				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+			else
+				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+			if (!tmpX)
+				tmpX = 0.0f;
+			if (!tmpY)
+				tmpY = 0.0f;
+			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+			tmp.TexCoords[0] = tex[1];
+			tmp.TexCoords[1] = tex[0];
 		} else {
 			tmp.TexCoords[0] = coords[v4[1] - 1][0];
 			tmp.TexCoords[1] = coords[v4[1] - 1][1];
@@ -558,9 +729,24 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 
 		tmp.Position = positions[v1[0] - 1];
 		if (v1[1] == 0 || v1[1] > coords.size()) {
-			Vector3 tex = Vector3(tmp.Position[0], tmp.Position[1], 0.0f).unit();
-			tmp.TexCoords[0] = tex[0];
-			tmp.TexCoords[1] = tex[1];
+			float tmpX;
+			if (max_x - min_x != 0)
+				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
+			else
+				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
+			float tmpY;
+			if (max_y - min_y != 0)
+				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
+			else
+				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
+
+			if (!tmpX)
+				tmpX = 0.0f;
+			if (!tmpY)
+				tmpY = 0.0f;
+			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
+			tmp.TexCoords[0] = tex[1];
+			tmp.TexCoords[1] = tex[0];
 		} else {
 			tmp.TexCoords[0] = coords[v1[1] - 1][0];
 			tmp.TexCoords[1] = coords[v1[1] - 1][1];
@@ -571,7 +757,7 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 			tmp.Normal = normals[v1[2] - 1];
 		}
 		vertices.push_back(tmp);
-	// std::cout << tmp.Position[0] << ", " << tmp.Position[1] << ", " << tmp.Position[2] << ", " << tmp.Normal[0] << ", " << tmp.Normal[1] << ", " << tmp.Normal[2] << ", " << tmp.TexCoords[0] << ", " << tmp.TexCoords[1] << std::endl;
+	// std::cout << tmp.Position[0] << ", " << tmp.Position[1] << ", " << tmp.Position[2] << ", " << tmp.Normal[0] << ", " << tmp.Normal[1] << ", " << tmp.Normal[2] << ", " << (tmp.TexCoords[0] == 0.0f) << ", " << tmp.TexCoords[1] << std::endl;
 	}
 
 	faces.push_back(toInt(face1));
