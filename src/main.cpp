@@ -127,7 +127,7 @@ int main()
 	// Texture specularMap("./assets/container2_specular.png");
 
 
-	Model model("./assets/cube_img.obj");
+	Model model("./assets/42.obj");
 
 	if (model.getErr()) {
 		gl_log_err("**ERROR** : Could not initialize model\n");

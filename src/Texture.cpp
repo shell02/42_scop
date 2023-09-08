@@ -28,7 +28,7 @@ Texture::Texture(std::string texturePath, bool flip) : path(texturePath)
 	}
 	else
 	{
-		gl_log_err("ERROR: **TEXTURE**: Failed to load image at %s\n", texturePath);
+		gl_log_err("ERROR: **TEXTURE**: Failed to load image at %s\n", texturePath.c_str());
 	}
 	stbi_image_free(data);
 

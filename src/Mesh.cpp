@@ -19,14 +19,17 @@ void Mesh::draw(Shader const &program)
 {
 	float transMatrix[16];
 	Matrix4 model(1.0f);
+	int prevSize = 0;
 	int idx = 0;
 
+	srand (static_cast <unsigned> (time(0)));
 	program.use();
 	bindVAO();
 
 	for (std::map<int, std::vector<unsigned int>>::iterator it = indices.begin(); it != indices.end(); it++) {
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, it->first * sizeof(unsigned int), &(it->second)[0], GL_STATIC_DRAW);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		// glBufferData(GL_ELEMENT_ARRAY_BUFFER, it->second.size() * sizeof(unsigned int), &(it->second)[0], GL_STATIC_DRAW);
+
 
 		model.getMatrix(transMatrix);
 		program.setMat4("model", transMatrix);
@@ -39,18 +42,27 @@ void Mesh::draw(Shader const &program)
 			program.set3Float("material.ambient", textures[idx].getAmbient()[0], textures[idx].getAmbient()[1], textures[idx].getAmbient()[2]);
 			program.set3Float("material.diff", textures[idx].getDiff()[0], textures[idx].getDiff()[1], textures[idx].getDiff()[2]);
 			program.set3Float("material.spec", textures[idx].getSpec()[0], textures[idx].getSpec()[1], textures[idx].getSpec()[2]);
-			// glDrawElements(GL_TRIANGLES, it->first, GL_UNSIGNED_INT, 0);
+			// glDrawElements(GL_TRIANGLES, it->second.size(), GL_UNSIGNED_INT, 0);
+		
+			for (size_t i = 0; i < it->second.size(); i += 3) {
+				if (textures[idx].getIsTextured() == false) {
+					float random = static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - 0.5f;
+					program.set3Float("material.diff", textures[idx].getDiff()[0] + random, textures[idx].getDiff()[1] + random, textures[idx].getDiff()[2] + random);
+				}
+				glDrawArrays(GL_TRIANGLES, i * 3 + prevSize, 3);
+			}
 		}
 		else {
 			textures[idx].bindDiff();
 			textures[idx].bindSpec();
 			program.setInt("material.diffuse", 0);
 			program.setInt("material.specular", 1);
+			glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
 			// std::cout << texture.getSpecular().getID() << "/" << texture.getDiffuse().getID() << std::endl;
 		}
-		glDrawElements(GL_TRIANGLES, it->first, GL_UNSIGNED_INT, 0);
 		idx++;
+		prevSize = it->second.size();
 	}
 
 	if (indices.size() == 0) {

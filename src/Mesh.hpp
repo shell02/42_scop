@@ -5,6 +5,9 @@
 
 #include <iostream>
 #include <vector>
+#include <random>
+#include <cstdlib>
+#include <ctime>
 #include <map>
 
 #include "Vector.hpp"

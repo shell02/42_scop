@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <map>
 
@@ -33,11 +34,12 @@ class Model {
 
 		int checkFile(std::string filename);
 		std::string getOpt(std::string line);
+		std::string rmOpt(std::string line);
+		std::string getArg(std::string line);
 		std::map<std::string, MTL> parseMTL(std::string line);
-		Vector3 parsePos(std::string line);
-		Vector3 parseNorm(std::string line);
+		Vector3 parseVec3(std::string line);
 		Vector3 parseTexC(std::string line);
-		void parseToIndice(std::string line, std::vector<unsigned int>& ind);
-		std::vector<Vertex> fillVertices(std::vector<Vector3> positions, std::vector<Vector3> normals, std::vector<float[2]> coords, std::vector<unsigned int> faces);
+		Vector3 getFace(std::string line);
+		void parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> positions, std::vector<Vector3> normals, std::vector<Vector3> coords);
 
 };
