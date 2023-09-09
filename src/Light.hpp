@@ -8,11 +8,11 @@
 #include "Vector.hpp"
 #include "Matrix.hpp"
 #include "Shader.hpp"
-#include "Mesh.hpp"
 
 class Light {
 	public:
 		Light(Vector3 position = Vector3(0.0f, 2.0f, 2.0f));
+		~Light();
 
 		void use() const;
 		void draw(Matrix4 view, Matrix4 projection) const;

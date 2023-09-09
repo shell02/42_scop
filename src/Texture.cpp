@@ -39,6 +39,7 @@ Texture::Texture(std::string texturePath, bool flip) : path(texturePath)
 }
 
 Texture::~Texture() {
+	// glDeleteTextures(1, &id);
 	return ;
 }
 

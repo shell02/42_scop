@@ -31,6 +31,7 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 uniform bool isTextured;
+uniform float transition;
 
 void main()
 {
@@ -45,7 +46,12 @@ void main()
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     
-    if (isTextured == false) {
+    if (transition > 0.0f && transition < 1.0f) {
+        ambient = light.ambient * (material.ambient * transition) + light.ambient * (vec3(texture(material.diffuse, TexCoords)) * (1 - transition));
+        diffuse = light.diffuse * diff * (material.diff * transition) + light.diffuse * diff * (vec3(texture(material.diffuse, TexCoords)) * (1 - transition));
+        specular = light.specular * spec * (material.spec * transition) + light.specular * spec * (texture(material.specular, TexCoords).rgb * (1 - transition));
+    }
+    else if (isTextured == false) {
         
         // ambient
         ambient = light.ambient * material.ambient;
@@ -55,7 +61,6 @@ void main()
 
         // specular
         specular = light.specular * (spec * material.spec);
-
     }
     else if (isTextured) {
         ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
@@ -63,6 +68,7 @@ void main()
         diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
     
         specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
+    
     }
     
     vec3 result = ambient + diffuse + specular;

@@ -16,50 +16,6 @@ int toInt(std::string line) {
 	return num;
 }
 
-float example[] = {
-    // positions          // normals           // texture coords
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
 
 Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f), maxY(0.0f), maxZ(0.0f), minZ(0.0f)
 {
@@ -72,8 +28,6 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 	std::string line;
 	std::string opt;
 	int idx = 0;
-	int lineN = 0;
-	// int VN = 0;
 
 	std::vector<Vector3> positions;
 	std::vector<Vector3> normals;
@@ -90,7 +44,6 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 	if (file.is_open()) {
 		
 		while (getline(file, line)) {
-			++lineN;
 			if (line.find('#') != std::string::npos)
 				line.erase(line.find('#'));
 
@@ -98,18 +51,12 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 				opt = getOpt(line);
 
 				if (opt == "o") {
-					// std::cout << "New Object" << std::endl;
 					if (vertices.size() != 0) {
+						
 						indices.insert(std::make_pair(idx++, faces.size()));
 						objects.push_back(Mesh(vertices, indices, textures));
+						
 						faces.clear();
-		std::cout << "End of File: Number of vertices: " << vertices.size() << std::endl;
-		std::cout << "End of File: Number of indices: " << indices.size() << std::endl;
-		std::cout << "End of File: Number of textures: " << textures.size() << std::endl;
-
-						// positions.clear();
-						// coords.clear();
-						// normals.clear();
 						vertices.clear();
 						indices.clear();
 						textures.clear();
@@ -117,22 +64,10 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 				}
 				else if (opt == "mtllib") {
 					texturesNames = parseMTL(line);
-					for (std::map<std::string, MTL>::iterator it = texturesNames.begin(); it != texturesNames.end(); it++) {
-						// std::cout << it->first << ":\n";
-						// std::cout << "Ambient color: " << it->second.getAmbient()[0] << " " << it->second.getAmbient()[1] << " " << it->second.getAmbient()[2] << std::endl;
-						// std::cout << "Diffuse color: " << it->second.getDiff()[0] << " " << it->second.getDiff()[1] << " " << it->second.getDiff()[2] << std::endl;
-						// std::cout << "Spec color: " << it->second.getSpec()[0] << " " << it->second.getSpec()[1] << " " << it->second.getSpec()[2] << std::endl;
-						// std::cout << "Shininess: " << it->second.getShiny() << std::endl;
-						// std::cout << "Transparency: " << it->second.getTr() << std::endl;
-						// std::cout << "IsTextured: " << it->second.getIsTextured() << std::endl;
-						// std::cout << "Tex Diff: " << it->second.getDiffuse().getID() << std::endl;
-						// std::cout << "Tex Spec: " << it->second.getSpecular().getID() << std::endl;
-					}
 				}
 				else if (opt == "v") {
 					Vector3 pos = parseVec3(line);
 					positions.push_back(pos);
-					// std::cout << "Line: " << lineN << " V: " << positions.size() << std::endl;
 
 					if (maxX < positions[positions.size() - 1][0])
 						maxX = positions[positions.size() - 1][0];
@@ -156,24 +91,23 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 					coords.push_back(tex);
 				}
 				else if (opt == "usemtl") {
-					// std::cout << "Texture: " << getArg(line) << std::endl;
-					// faces.clear();
 					if (faces.size() != 0) {
 						indices.insert(std::make_pair(idx++, faces.size()));
 						faces.clear();
 					}
 					line = getArg(line);
 					if (line.size() == 0) {
+						gl_log_err("**ERROR** : No Material name provided\n");
 						err = 1;
-						break ;
 					}
-					textures.push_back(texturesNames.at(line));
+					else
+						textures.push_back(texturesNames.at(line));
 				}
 				else if (opt == "f") {
 					parseToIndice(line, vertices, faces, positions, normals, coords);
 				}
 				else if (opt == "s" || opt == "g") {
-					gl_log_err("**INFO**: option %s not supported\n", opt.c_str());
+					//pass
 				}
 				else {
 					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
@@ -189,28 +123,19 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 		}
 		file.close();
 		indices.insert(std::make_pair(idx, faces.size()));
-		std::cout << "End of File: Number of vertices: " << vertices.size() << std::endl;
-		std::cout << "End of File: Number of indices: " << indices.size() << std::endl;
-		std::cout << "End of File: Number of textures: " << textures.size() << std::endl;
 
 		if (textures.size() == 0)
 			textures.push_back(MTL());
 
-		// std::cout << "End of File: Number of faces: " << faces.size() << std::endl;
 		objects.push_back(Mesh(vertices, indices, textures));
-
-		std::cout << "MaxX: " << maxX << " MinX: " << minX << " MaxY: " << maxY << " MinY: " << minY << " MaxZ: " << maxZ << " MinZ: " << minZ << std::endl;
 
 		float centerX = 0.0f;
 		float centerY = 0.0f;
 		float centerZ = 0.0f;
-
 		
 		centerX = (maxX + minX) / 2;
 		centerY = (maxY + minY) / 2;
 		centerZ = (maxZ + minZ) / 2;
-		// centerY = centerY / positions.size();
-		// centerZ = centerZ / positions.size();
 
 		for (size_t i = 0; i < objects.size(); i++) {
 			objects[i].normalizeV(maxX, maxY, maxZ, minX, minY, minZ);
@@ -218,43 +143,35 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 		}
 	}
 
-	
+}
 
-
-	// for (int i = 0; i < 36; i++) {
-	// 	Vertex tmp;
-
-	// 	tmp.Position = Vector3(example[i * 8], example[i * 8 + 1], example[i * 8 + 2]);
-	// 	// tmp.Position[0] = example[i * 8];
-	// 	// tmp.Position[1] = example[i * 8 + 1];
-	// 	// tmp.Position[2] = example[i * 8 + 2];
-	// 	tmp.Normal = Vector3(example[i * 8 + 3], example[i * 8 + 4], example[i * 8 + 5]);
-	// 	// tmp.Normal[0] = example[i * 8 + 3];
-	// 	// tmp.Normal[1] = example[i * 8 + 4];
-	// 	// tmp.Normal[2] = example[i * 8 + 5];
-	// 	tmp.TexCoords[0] = example[i * 8 + 6];
-	// 	tmp.TexCoords[1] = example[i * 8 + 7];
-	// 	vertices.push_back(Vertex(tmp));
-	// }
-
-
-	// // for (int i = 0; i != 0; i++) {
-	// // 	unsigned int indices;
-	// // }
-
-	// MTL tex;
-	// tex.setDiffuseTex(Texture("./assets/container2.png"));
-	// tex.setSpecTex(Texture("./assets/container2_specular.png"));
-	// tex.setIsTextured(true);
-	// textures.push_back(tex);
-
-	// objects.push_back(Mesh(vertices, indices, textures));
+Model::~Model()
+{
+	objects.clear();
 }
 
 void Model::draw(Shader const &program)
 {
 	for(unsigned int i = 0; i < objects.size(); i++)
         objects[i].draw(program);
+}
+
+void Model::setTexture(bool isTextured)
+{
+	for(unsigned int i = 0; i < objects.size(); i++)
+        objects[i].setIsTextured(isTextured);
+}
+
+void Model::setRotation(int axis)
+{
+	for(unsigned int i = 0; i < objects.size(); i++)
+        objects[i].setRotation(axis);
+}
+
+void Model::setMove(int axis, float move)
+{
+	for(unsigned int i = 0; i < objects.size(); i++)
+        objects[i].setMove(axis, move);
 }
 
 int Model::getErr() const
@@ -387,14 +304,14 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 					textures[material].setTr(toFloat(rmOpt(line)));
 				}
 				else if (opt == "map_Kd" || opt == "map_Ka") {
-					textures[material].setDiffuseTex(Texture(rmOpt(line)));
-					textures[material].setIsTextured(true);
+					textures[material].setDiffuseTex(Texture(dirPath + rmOpt(line)));
+					// textures[material].setIsTextured(true);
 				}
-				else if (opt == "map_Ns") {
-					textures[material].setSpecTex(Texture(rmOpt(line)));
+				else if (opt == "map_Ns" || opt == "map_Ks") {
+					textures[material].setSpecTex(Texture(dirPath + rmOpt(line)));
 				}
 				else if (opt == "illum" || opt == "Ke" || opt == "Ni") {
-					gl_log_err("**INFO**: option %s not supported\n", opt.c_str());
+					//pass
 				}
 				else {
 					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());

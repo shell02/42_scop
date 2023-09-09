@@ -5,13 +5,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <assert.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
+
+#include <sys/stat.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
-#include <vector>
 
 #define GL_LOG_FILE "gl.log"
 #define WIDTH 800
@@ -19,6 +21,12 @@
 
 #define PI 3.14159265359
 
+typedef struct controls {
+	bool wires = false;
+	bool textured = false;
+	bool party = false;
+	bool move = false;
+} controls;
 
 // LOG FUNCTIONS
 bool restart_gl_log();
@@ -30,7 +38,6 @@ unsigned int severity, int length, const char* message, const void* userParam);
 
 // UTILITY FUNCTIONS
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 float toRadians(float f);
 

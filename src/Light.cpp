@@ -64,6 +64,13 @@ Light::Light(Vector3 position) : lightProgram(Shader("./shaders/lightShader.vert
 	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glDeleteBuffers(1, &lightVBO);
+}
+
+Light::~Light()
+{
+    // glDeleteProgram(lightProgram.getId());
+    // glDeleteVertexArrays(1, &lightVAO);
 }
 
 void Light::use() const

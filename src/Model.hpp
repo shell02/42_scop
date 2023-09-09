@@ -19,8 +19,12 @@
 class Model {
 	public:
 		Model(std::string filename);
+		~Model();
 
 		void draw(Shader const &program);
+		void setTexture(bool isTextured);
+		void setRotation(int axis);
+		void setMove(int axis, float move);
 
 		int getErr() const;
 

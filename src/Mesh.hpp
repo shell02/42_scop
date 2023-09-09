@@ -30,6 +30,7 @@ class Mesh {
 		std::vector<MTL>	textures;
 
 		Mesh();
+		~Mesh();
 		Mesh(std::vector<Vertex> vertices, std::map<int, unsigned int> indices, std::vector<MTL> textures);
 
 		void draw(Shader const &program);
@@ -40,6 +41,10 @@ class Mesh {
 		void normalizeV(float maxX, float maxY, float maxZ, float minX, float minY, float minZ);
 		void center(float centerX, float centerY, float centerZ);
 
+		void setIsTextured(bool isTextured);
+		void setRotation(int axis);
+		void setMove(int axis, float move);
+
 
 	private:
 		unsigned int VAO;
@@ -48,10 +53,18 @@ class Mesh {
 
 		Matrix4 scaleMat;
 		Matrix4 transMat;
+		Matrix4 rotateMat;
+		Matrix4 moveMat;
 		Vector3 rotationAxis;
 
 		std::vector<Vector3> colorsA;
 		std::vector<Vector3> colorsD;
+
+		float moveX;
+		float moveY;
+		float moveZ;
+
+		int axis;
 
 		void setupMesh();
 };

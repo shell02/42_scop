@@ -1,7 +1,7 @@
 NAME = scop
 CC = c++
 INCLUDE = ./include
-LIB = ./lib -lglfw3 -lassimp
+LIB = ./lib -lglfw3
 CFLAGS = -Wall -Werror -Wextra
 SRCS_DIR = ./src
 OBJS_DIR = ./objs

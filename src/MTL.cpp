@@ -24,11 +24,15 @@ MTL::MTL(MTL const& copy) : diffuse(copy.diffuse), specular(copy.specular)
 
 void MTL::setDiffuseTex(Texture diffuse)
 {
+	// unsigned int id = this->diffuse.getID();
+	// glDeleteTextures(1, &id);
 	this->diffuse = diffuse;
 }
 
 void MTL::setSpecTex(Texture specular)
 {
+	// unsigned int id = this->specular.getID();
+	// glDeleteTextures(1, &id);
 	this->specular = specular;
 }
 
