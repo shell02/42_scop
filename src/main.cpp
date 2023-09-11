@@ -45,27 +45,27 @@ int checkRessources(const char *file) {
 		return 0;
 	}
     
-	// if (lstat(file, &sb) == 0) {
-	// 	if (S_ISLNK(sb.st_mode)) {
-	// 		char target[250];
+	if (lstat(file, &sb) == 0) {
+		if (S_ISLNK(sb.st_mode)) {
+			char target[250];
 
-	// 		ssize_t ret = readlink(file, target, sizeof(target));
-	// 		if (ret != -1) {
-	// 			target[ret] = '\0';
-	// 			if (stat(target, &sb) == 0) {
-	// 				if (sb.st_size <= 1) {
-	// 					std::cerr << "File appears to be an infinite source or empty." << std::endl;
-	// 					return 0;
-	// 				} 
-	// 			} else {
-	// 				perror("stat");
-	// 				return 0;
-	// 			}
-	// 		} else {
-	// 			perror("readlink");
-	// 			return 0;
-	// 		}
-	// 	} else {
+			ssize_t ret = readlink(file, target, sizeof(target));
+			if (ret != -1) {
+				target[ret] = '\0';
+				if (stat(target, &sb) == 0) {
+					if (sb.st_size <= 1) {
+						std::cerr << "File appears to be an infinite source or empty." << std::endl;
+						return 0;
+					} 
+				} else {
+					perror("stat");
+					return 0;
+				}
+			} else {
+				perror("readlink");
+				return 0;
+			}
+		} else {
 			if (stat(file, &sb) == 0) {
 				if (sb.st_size <= 1) {
 					std::cerr << "File appears to be an infinite source or empty." << std::endl;
@@ -75,11 +75,11 @@ int checkRessources(const char *file) {
 				perror("**ERRORR** :");
 				return 0;
 			}
-	// 	}
-	// } else {
-	// 	perror("lstat");
-	// 	return 0;
-	// }
+		}
+	} else {
+		perror("lstat");
+		return 0;
+	}
 	
 	return 1;
 }
