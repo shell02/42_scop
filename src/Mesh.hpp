@@ -26,30 +26,34 @@ class Mesh {
 	public:
 
 		std::vector<Vertex>	vertices;
-		std::map<int, unsigned int>	indices;
+		std::vector<unsigned int>	indices;
 		std::vector<MTL>	textures;
 
 		Mesh();
 		~Mesh();
-		Mesh(std::vector<Vertex> vertices, std::map<int, unsigned int> indices, std::vector<MTL> textures);
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MTL> textures);
 
 		void draw(Shader const &program);
 		void bindVAO() const;
 		void bindVBO() const;
-		void bindEBO() const;
 
 		void normalizeV(float maxX, float maxY, float maxZ, float minX, float minY, float minZ);
 		void center(float centerX, float centerY, float centerZ);
+		void normalizeT(float maxX, float maxY, float maxZ, float minX, float minY, float minZ);
 
 		void setIsTextured(bool isTextured);
+		void setTex(bool Tex);
 		void setRotation(int axis);
 		void setMove(int axis, float move);
+
+		bool getTex(void) const;
+
+		void clear();
 
 
 	private:
 		unsigned int VAO;
 		unsigned int VBO;
-		unsigned int EBO;
 
 		Matrix4 scaleMat;
 		Matrix4 transMat;
@@ -65,6 +69,8 @@ class Mesh {
 		float moveZ;
 
 		int axis;
+
+		bool textured;
 
 		void setupMesh();
 };

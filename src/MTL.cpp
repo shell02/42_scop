@@ -26,6 +26,7 @@ void MTL::setDiffuseTex(Texture diffuse)
 {
 	// unsigned int id = this->diffuse.getID();
 	// glDeleteTextures(1, &id);
+	this->diffuse.clear();
 	this->diffuse = diffuse;
 }
 
@@ -33,6 +34,7 @@ void MTL::setSpecTex(Texture specular)
 {
 	// unsigned int id = this->specular.getID();
 	// glDeleteTextures(1, &id);
+	this->specular.clear();
 	this->specular = specular;
 }
 
@@ -118,5 +120,11 @@ float MTL::getTr() const
 bool MTL::getIsTextured() const
 {
 	return isTextured;
+}
+
+void MTL::clear()
+{
+	this->diffuse.clear();
+	this->specular.clear();
 }
 

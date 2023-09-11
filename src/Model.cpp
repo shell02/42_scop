@@ -1,21 +1,59 @@
 #include "Model.hpp"
 
-float toFloat(std::string line) {
-	float num;
+bool isFloat(const std::string& line) {
+	bool dot = false;
+	size_t i = line[0] == '-' ? 1 : 0;
+	for (; i < line.size(); i++) {
+		if (line[i] == '.' && dot == true)
+			return false;
+		if (line[i] == '.')
+			dot = true;
+		if (!isdigit(line[i]) && line[i] != '.') {
+			return false;
+        }
+	}
+	return true;
+}
 
+float Model::toFloat(std::string line) {
+	float num = 0.0f;
+
+	if (!isFloat(line)) {
+		err = 1;
+	}
 	std::stringstream ss(line);
 	ss >> num;
 	return num;
 }
 
-int toInt(std::string line) {
+bool isInt(const std::string& line) {
+	size_t i = line[0] == '-' ? 1 : 0;
+	for (; i < line.size(); i++) {
+		if (!isdigit(line[i])) {
+			return false;
+        }
+	}
+	return true;
+}
+
+int Model::toInt(std::string line) {
 	int num = 0;
 
+	if (!isInt(line)) {
+		err = 1;
+	}
 	std::stringstream ss(line);
 	ss >> num;
 	return num;
 }
 
+float max(float a, float b) {
+	return a > b ? a : b;
+}
+
+float min(float a, float b) {
+	return a < b ? a : b;
+}
 
 Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f), maxY(0.0f), maxZ(0.0f), minZ(0.0f)
 {
@@ -27,39 +65,44 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 	std::fstream file;
 	std::string line;
 	std::string opt;
-	int idx = 0;
+	bool Tex = true;
 
 	std::vector<Vector3> positions;
 	std::vector<Vector3> normals;
 	std::vector<Vector3> coords;
 	std::map<std::string, MTL> texturesNames;
-	std::vector<unsigned int> faces;
+	unsigned int faces = 0;
 
-	std::map<int, unsigned int> indices;
-	std::vector<Vertex> vertices;
-	std::vector<MTL> textures;
+	int idx = 0;
+
+	objects.push_back(Mesh());
 
 	file.open(filename);
 
 	if (file.is_open()) {
 		
 		while (getline(file, line)) {
+			idx++;
 			if (line.find('#') != std::string::npos)
 				line.erase(line.find('#'));
 
 			if (line.size()) {
 				opt = getOpt(line);
+				if (opt.size() == 0) {
+					err = 1;
+					gl_log_err("**ERROR1**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
+					break ;
+				}
 
 				if (opt == "o") {
-					if (vertices.size() != 0) {
+					if (objects[objects.size() - 1].vertices.size() != 0) {
 						
-						indices.insert(std::make_pair(idx++, faces.size()));
-						objects.push_back(Mesh(vertices, indices, textures));
+						objects[objects.size() - 1].indices.push_back(faces);
+						objects[objects.size() - 1].setTex(Tex);
+						objects.push_back(Mesh());
 						
-						faces.clear();
-						vertices.clear();
-						indices.clear();
-						textures.clear();
+						faces = 0;
+						Tex = true;
 					}
 				}
 				else if (opt == "mtllib") {
@@ -69,18 +112,12 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 					Vector3 pos = parseVec3(line);
 					positions.push_back(pos);
 
-					if (maxX < positions[positions.size() - 1][0])
-						maxX = positions[positions.size() - 1][0];
-					if (minX > positions[positions.size() - 1][0])
-						minX = positions[positions.size() - 1][0];
-					if (maxY < positions[positions.size() - 1][1])
-						maxY = positions[positions.size() - 1][1];
-					if (minY > positions[positions.size() - 1][1])
-						minY = positions[positions.size() - 1][1];
-					if (maxZ < positions[positions.size() - 1][2])
-						maxZ = positions[positions.size() - 1][2];
-					if (minZ > positions[positions.size() - 1][2])
-						minZ = positions[positions.size() - 1][2];
+					maxX = max(maxX, positions[positions.size() - 1][0]);
+					minX = min(minX, positions[positions.size() - 1][0]);
+					maxY = max(maxY, positions[positions.size() - 1][1]);
+					minY = min(minY, positions[positions.size() - 1][1]);
+					maxZ = max(maxZ, positions[positions.size() - 1][2]);
+					minZ = min(minZ, positions[positions.size() - 1][2]);
 				}
 				else if (opt == "vn") {
 					Vector3 norm = parseVec3(line);
@@ -91,56 +128,58 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 					coords.push_back(tex);
 				}
 				else if (opt == "usemtl") {
-					if (faces.size() != 0) {
-						indices.insert(std::make_pair(idx++, faces.size()));
-						faces.clear();
+					if (faces != 0) {
+						objects[objects.size() - 1].indices.push_back(faces);
+						faces = 0;
 					}
-					line = getArg(line);
+					line = getArg(line, 1);
 					if (line.size() == 0) {
 						gl_log_err("**ERROR** : No Material name provided\n");
 						err = 1;
 					}
-					else
-						textures.push_back(texturesNames.at(line));
+					else {
+						if (texturesNames.find(line) == texturesNames.end()) {
+							gl_log_err("**ERROR** : Material name does not exist : line %s\n", line.c_str());
+							err = 1;
+						}
+						else
+							objects[objects.size() - 1].textures.push_back(texturesNames.at(line));
+					}
 				}
 				else if (opt == "f") {
-					parseToIndice(line, vertices, faces, positions, normals, coords);
+					bool tmp  = parseToIndice(line, objects[objects.size() - 1].vertices, &faces, positions, normals, coords);
+					if (tmp == false)
+						Tex = false;
 				}
 				else if (opt == "s" || opt == "g") {
 					//pass
 				}
 				else {
-					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR2**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
 					err = 1;
 					return ;
 				}
 
 				if (err == 1) {
-					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR3**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
 					return ;
 				}
 			}
 		}
 		file.close();
-		indices.insert(std::make_pair(idx, faces.size()));
+		objects[objects.size() - 1].indices.push_back(faces);
 
-		if (textures.size() == 0)
-			textures.push_back(MTL());
+		if (objects[objects.size() - 1].textures.size() == 0)
+			objects[objects.size() - 1].textures.push_back(MTL());
 
-		objects.push_back(Mesh(vertices, indices, textures));
+		// objects.push_back(Mesh(vertices, indices, textures));
+		objects[objects.size() - 1].setTex(Tex);
 
-		float centerX = 0.0f;
-		float centerY = 0.0f;
-		float centerZ = 0.0f;
-		
-		centerX = (maxX + minX) / 2;
-		centerY = (maxY + minY) / 2;
-		centerZ = (maxZ + minZ) / 2;
 
 		for (size_t i = 0; i < objects.size(); i++) {
 			objects[i].normalizeV(maxX, maxY, maxZ, minX, minY, minZ);
-			objects[i].center(-centerX, -centerY, -centerZ);
 		}
+
 	}
 
 }
@@ -179,6 +218,12 @@ int Model::getErr() const
 	return err;
 }
 
+void Model::clear()
+{
+	for(unsigned int i = 0; i < objects.size(); i++)
+        objects[i].clear();
+}
+
 std::vector<Mesh> Model::getObjects() const
 {
 	return objects;
@@ -186,7 +231,6 @@ std::vector<Mesh> Model::getObjects() const
 
 int Model::checkFile(std::string filename)
 {
-	std::fstream file;
 	std::string line = filename.substr(filename.find_last_of("."));
 
 	if (line != ".obj") {
@@ -194,49 +238,43 @@ int Model::checkFile(std::string filename)
 		return 0;
 	}
 
-	file.open(filename);
-	if (file.is_open()) {
-		size_t last = filename.find_last_of('/');
-
-		if (last != std::string::npos) {
-			dirPath = filename.substr(0, last + 1);
-		}
-		else
-			dirPath = "./";
-		file.close();
-		return 1;
+	size_t last = filename.find_last_of('/');
+	if (last != std::string::npos) {
+		dirPath = filename.substr(0, last + 1);
 	}
-	else {
-		gl_log_err("**ERROR** : Could not open %s\n", filename.c_str());
-		return 0;
-	}
+	else
+		dirPath = "./";
+	return 1;
 }
 
-std::string Model::getArg(std::string line) {
-	line = rmOpt(line);
+std::string Model::getArg(std::string line, int offset) {
+	
+	for (int i = 0; i < offset; i++) {
+		if (!rmOpt(line)) {
+			return "";
+		}
+	}
 	size_t pos = line.find(" ");
 
 	if (pos != std::string::npos)
 		line.erase(pos);
-
-	if (line.size() == 0)
-		err = 1;
 	return line;
 }
 
-std::string Model::rmOpt(std::string line)
+int Model::rmOpt(std::string &line)
 {
+	std::string opt = getOpt(line);
+	if (opt.size() == 0)
+		return 0;
+
+	line.erase(0, line.find(opt) + opt.size());
 	size_t pos = line.find_first_not_of(" ");
 
 	if (pos != std::string::npos)
 		line.erase(0, pos);
-	pos = line.find(" ");
-	if (pos != std::string::npos)
-		line.erase(0, pos);
-	pos = line.find_first_not_of(" ");
-	if (pos != std::string::npos)
-		line.erase(0, pos);
-	return line;
+	else
+		return 0;
+	return 1;
 }
 
 std::string Model::getOpt(std::string line)
@@ -245,11 +283,13 @@ std::string Model::getOpt(std::string line)
 
 	if (pos != std::string::npos)
 		line.erase(0, pos);
+	else
+		return "";
 	pos = line.find(" ");
 	if (pos != std::string::npos)
 		line.erase(pos);
 	else
-		return 0;
+		return "";
 	return line;
 }
 
@@ -257,7 +297,7 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 {
 	std::map<std::string, MTL> textures;
 	
-	line = getArg(line);
+	line = getArg(line, 1);
 	std::string filename = dirPath + line;
 	std::fstream file;
 	std::string opt;
@@ -268,23 +308,24 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 	if (file.is_open()) {
 		
 		while (getline(file, line)) {
-			// std::cout << line << std::endl;
 			if (line.find('#') != std::string::npos)
 				line.erase(line.find('#'));
 
 			if (line.size()) {
 				opt = getOpt(line);
+				if (opt.size() == 0) {
+					err = 1;
+					gl_log_err("**ERROR4**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					return textures ;
+				}
 
 				if (opt == "newmtl") {
-					MTL tmp;
 
 					if (textures.size() != 0 && diff == false) {
 						textures[material].setDiff(textures[material].getAmbient());
 					}
-					material = getArg(line);
-					textures.insert(std::make_pair(material, tmp));
-					// textures[material].setIsTextured(true);
-
+					material = getArg(line, 1);
+					textures.insert(std::make_pair(material, MTL()));
 
 				}
 				else if (opt == "Ka") {
@@ -298,24 +339,41 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 					textures[material].setSpec(parseVec3(line));
 				}
 				else if (opt == "Ns") {
-					textures[material].setShiny(toFloat(rmOpt(line)));
+					textures[material].setShiny(toFloat(getArg(line, 1)));
 				}
-				else if (opt == "d" || opt == "tr") {
-					textures[material].setTr(toFloat(rmOpt(line)));
+				else if (opt == "d") {
+					textures[material].setTr(toFloat(getArg(line, 1)));
+				}
+				else if (opt == "tr") {
+					textures[material].setTr(1.0f - toFloat(getArg(line, 1)));
 				}
 				else if (opt == "map_Kd" || opt == "map_Ka") {
-					textures[material].setDiffuseTex(Texture(dirPath + rmOpt(line)));
-					// textures[material].setIsTextured(true);
+					Texture tex(dirPath + getArg(line, 1));
+					if (tex.getErr()) {
+						err = 1;
+						return textures;
+					}
+					textures[material].setDiffuseTex(tex);
 				}
 				else if (opt == "map_Ns" || opt == "map_Ks") {
-					textures[material].setSpecTex(Texture(dirPath + rmOpt(line)));
+					Texture tex(dirPath + getArg(line, 1));
+					if (tex.getErr()) {
+						err = 1;
+						return textures;
+					}
+					textures[material].setSpecTex(tex);
 				}
 				else if (opt == "illum" || opt == "Ke" || opt == "Ni") {
 					//pass
 				}
 				else {
-					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR5**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
 					err = 1;
+					return textures;
+				}
+
+				if (err == 1) {
+					gl_log_err("**ERROR6**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
 					return textures;
 				}
 			}
@@ -334,32 +392,75 @@ Vector3 Model::parseVec3(std::string line)
 	float v1;
 	float v2;
 	float v3;
+	std::string l1 = getArg(line, 1);
+	std::string l2 = getArg(line, 2);
+	std::string l3 = getArg(line, 3);
+	
+	if (l1.size() == 0 || l2.size() == 0 || l3.size() == 0) {
+		err = 1;
+	}
 
-	v1 = toFloat(getArg(line));
-	line = rmOpt(line);
-	v2 = toFloat(getArg(line));
-	line = rmOpt(line);
-	v3 = toFloat(getArg(line));
+	v1 = toFloat(l1);
+	v2 = toFloat(l2);
+	v3 = toFloat(l3);
 
 	return Vector3(v1, v2, v3);
-
 }
 
 Vector3 Model::parseTexC(std::string line)
 {
 	float v1;
 	float v2;
+	std::string l1 = getArg(line, 1);
+	std::string l2 = getArg(line, 2);
 
-	v1 = toFloat(getArg(line));
-	line = rmOpt(line);
-	v2 = toFloat(getArg(line));
+	if (l1.size() == 0 || l2.size() == 0) {
+		err = 1;
+	}
+
+	v1 = toFloat(l1);
+	v2 = toFloat(l2);
 
 	return Vector3(v1, v2, 0.0f);
 }
 
+bool checkfaces(std::string line) {
+	if (!isdigit(line[0]))
+		return false;
+	size_t i = 0;
+	while (isdigit(line[i]))
+		i++;
+	if (i == line.size())
+		return true;
+	if (line[i++] != '/')
+		return false;
+	while (isdigit(line[i]))
+		i++;
+	if (line[i] != '/' && i != line.size())
+		return false;
+	if (i == line.size())
+		return true;
+	i++;
+	while (isdigit(line[i]))
+		i++;
+	if (i != line.size())
+		return false;
+	return true;
+}
+
+int toFaces(std::string line) {
+	int num = 0;
+
+	std::stringstream ss(line);
+	ss >> num;
+	return num;
+}
+
 Vector3 Model::getFace(std::string line) {
-	if (line.size() == 0)
-		return Vector3(0.0f, 0.0f, 0.0f);
+	if (!checkfaces(line)) {
+		err = 1;
+		return Vector3(-1.0f, -1.0f, -1.0f);
+	}
 	
 	int v1;
 	int v2;
@@ -369,115 +470,113 @@ Vector3 Model::getFace(std::string line) {
 
 	if (pos == std::string::npos) {
 		v1 = toInt(line);
-		v2 = 0;
-		v3 = 0;
+		v2 = -1;
+		v3 = -1;
 	}
 	else if (pos == last) {
-		v1 = toInt(line.substr(0, line.find('/')));
-		v2 = toInt(line.substr(line.find('/') + 1));
-		v3 = 0;
+		v1 = toFaces(line.substr(0, line.find('/')));
+		v2 = toFaces(line.substr(line.find('/') + 1));
+		v3 = -1;
+	}
+	else if (pos + 1 == last) {
+		v1 = toFaces(line.substr(0, line.find('/')));
+		v2 = -1;
+		v3 = toFaces(line.substr(line.find_last_of('/') + 1));
 	}
 	else {
-		v1 = toInt(line.substr(0, line.find('/')));
-		v2 = toInt(line.substr(line.find('/') + 1, line.find_last_of('/')));
-		v3 = toInt(line.substr(line.find_last_of('/') + 1));
+		v1 = toFaces(line.substr(0, line.find('/')));
+		v2 = toFaces(line.substr(line.find('/') + 1, line.find_last_of('/')));
+		v3 = toFaces(line.substr(line.find_last_of('/') + 1));
 	}
 
 	return Vector3(v1, v2, v3);
 }
 
-void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords)
+bool Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, unsigned int* faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords)
 {
-	std::string face1 = getArg(line);
-	line = rmOpt(line);
-	std::string face2 = getArg(line);
-	line = rmOpt(line);
-	std::string face3 = getArg(line);
-	line = rmOpt(line);
-	std::string face4;
-	if (line.find(" ") != std::string::npos && line.find_first_not_of(" ", line.find(" ")) != std::string::npos) {
-		face4 = getArg(line);
-		line = rmOpt(line);
-		if (line.find(" ") != std::string::npos && line.find_first_not_of(" ", line.find(" ")) != std::string::npos) {
-			gl_log_err("**ERROR**: Faces with 5 vertices not supported\n");
-			err = 1;
-			return ;
-		}
+	std::string face1 = getArg(line, 1);
+	std::string face2 = getArg(line, 2);
+	std::string face3 = getArg(line, 3);
+	if (face1.size() == 0 || face2.size() == 0 || face3.size() == 0) {
+		err = 1;
+		return false;
 	}
 
-	// std::cout << "Faces : " << face1 << " " << face2 << " " << face3 << " " << face4 << std::endl;
+	std::string face4;
+	if (getArg(line, 4) != "") {
+		face4 = getArg(line, 4);
+
+		if (face4.size() == 0) {
+			err = 1;
+			return false;
+		}
+		if (getArg(line, 5) != "") {
+			gl_log_err("**ERROR**: Faces with 5+ vertices not supported\n");
+			err = 1;
+			return false;
+		}
+	}
 
 	Vector3 v1 = getFace(face1);
 	Vector3 v2 = getFace(face2);
 	Vector3 v3 = getFace(face3);
-	Vector3 v4 = getFace(face4);
+	Vector3 v4;
+	if (face4.size())
+		v4 = getFace(face4);
 
+	bool Tex = (coords.size() ? true : false);
 
 
 	if (v1[0] == 0 || v2[0] == 0 || v3[0] == 0 || (face4.size() && v4[0] == 0)) {
 		gl_log_err("**ERROR**: Vertex Position can't be 0\n");
 		err = 1;
-		return ;
+		return Tex;
 	}
-
+	if (v1[0] <= -1 || v2[0] <= -1 || v3[0] <= -1 || (face4.size() && v4[0] <= -1)) {
+		gl_log_err("**ERROR**: Negative Vertex Position not supported\n");
+		err = 1;
+		return Tex;
+	}
 	if (v1[0] > positions.size() ||
 		v2[0] > positions.size() ||
 		v3[0] > positions.size() ||
 		(face4.size() && v4[0] > positions.size())) {
-		gl_log_err("**ERROR**: Vertex position over the number of vertices declared\n");
+		gl_log_err("**ERROR**: Vertex Position over the number of vertices declared\n");
 		err = 1;
-		return ;
+		return Tex;
 	}
 
-	float min_x = positions[v1[0] - 1][0];
-	float min_y = positions[v1[0] - 1][1];
-	float min_z = positions[v1[0] - 1][2];
-	float max_x = positions[v1[0] - 1][0];
-	float max_y = positions[v1[0] - 1][1];
-	float max_z = positions[v1[0] - 1][2];
 
-	if (min_x > positions[v2[0] - 1][0])
-		min_x = positions[v2[0] - 1][0];
-	if (max_x < positions[v2[0] - 1][0])
-		max_x = positions[v2[0] - 1][0];
-	if (min_y > positions[v2[0] - 1][1])
-		min_y = positions[v2[0] - 1][1];
-	if (max_y < positions[v2[0] - 1][1])
-		max_y = positions[v2[0] - 1][1];
-	if (min_z > positions[v2[0] - 1][2])
-		min_z = positions[v2[0] - 1][2];
-	if (max_z < positions[v2[0] - 1][2])
-		max_z = positions[v2[0] - 1][2];
-
-	if (min_x > positions[v3[0] - 1][0])
-		min_x = positions[v3[0] - 1][0];
-	if (max_x < positions[v3[0] - 1][0])
-		max_x = positions[v3[0] - 1][0];
-	if (min_y > positions[v3[0] - 1][1])
-		min_y = positions[v3[0] - 1][1];
-	if (max_y < positions[v3[0] - 1][1])
-		max_y = positions[v3[0] - 1][1];
-	if (min_z > positions[v3[0] - 1][2])
-		min_z = positions[v3[0] - 1][2];
-	if (max_z < positions[v3[0] - 1][2])
-		max_z = positions[v3[0] - 1][2];
-
-	if (face4.size()) {
-		if (min_x > positions[v4[0] - 1][0])
-			min_x = positions[v4[0] - 1][0];
-		if (max_x < positions[v4[0] - 1][0])
-			max_x = positions[v4[0] - 1][0];
-		if (min_y > positions[v4[0] - 1][1])
-			min_y = positions[v4[0] - 1][1];
-		if (max_y < positions[v4[0] - 1][1])
-			max_y = positions[v4[0] - 1][1];
-		if (min_z > positions[v4[0] - 1][2])
-			min_z = positions[v4[0] - 1][2];
-		if (max_z < positions[v4[0] - 1][2])
-			max_z = positions[v4[0] - 1][2];
+	if (v1[1] == 0 || v2[1] == 0 || v3[1] == 0 || (face4.size() && v4[1] == 0)) {
+		gl_log_err("**ERROR**: Vertex Texture can't be 0\n");
+		err = 1;
+		return Tex;
+	}
+	if (v1[1] == -1 || v2[1] == -1 || v3[1] == -1 || (face4.size() && v4[1] == -1)) {
+		Tex = false;
+	}
+	if (coords.size() && (v1[1] > coords.size() ||
+		v2[1] > coords.size() ||
+		v3[1] > coords.size() ||
+		(face4.size() && v4[1] > coords.size()))) {
+		gl_log_err("**ERROR**: Vertex Texture over the number of vertices declared\n");
+		err = 1;
+		return Tex;
 	}
 
-	// std::cout << "Max_x: " << max_x << " Min_x: " << min_x << " Max_y: " << max_y << " Min_y: " << min_y << std::endl;
+	if (v1[2] == 0 || v2[2] == 0 || v3[2] == 0 || (face4.size() && v4[2] == 0)) {
+		gl_log_err("**ERROR**: Vertex Normal can't be 0\n");
+		err = 1;
+		return Tex;
+	}
+	if (normals.size() && (v1[2] > normals.size() ||
+		v2[2] > normals.size() ||
+		v3[2] > normals.size() ||
+		(face4.size() && v4[2] > normals.size()))) {
+		gl_log_err("**ERROR**: Vertex Normal over the number of vertices declared\n");
+		err = 1;
+		return Tex;
+	}
 
 	Vector3 norm = positions[v2[0] - 1].subVector(positions[v1[0] - 1]).crossVector(positions[v3[0] - 1].subVector(positions[v1[0] - 1]));
 	norm = norm.unit();
@@ -485,30 +584,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	Vertex tmp;
 	
 	tmp.Position = positions[v1[0] - 1];
-	if (v1[1] == 0 || v1[1] > coords.size()) {
-		float tmpX;
-		if (max_x - min_x != 0)
-			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-		else
-			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-		float tmpY;
-		if (max_y - min_y != 0)
-			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-		else
-			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-		// if (!tmpX)
-		// 	tmpX = 0.0f;
-		// if (!tmpY)
-		// 	tmpY = 0.0f;
-		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-		tmp.TexCoords[0] = tex[1];
-		tmp.TexCoords[1] = tex[0];
+	if (v1[1] == -1 || v1[1] > coords.size()) {
+		tmp.TexCoords[0] = 0;
+		tmp.TexCoords[1] = 0;
 	} else {
 		tmp.TexCoords[0] = coords[v1[1] - 1][0];
 		tmp.TexCoords[1] = coords[v1[1] - 1][1];
 	}
-	if (v1[2] == 0 || v1[2] > normals.size()) {
+	if (v1[2] == -1 || v1[2] > normals.size()) {
 		tmp.Normal = norm;
 	} else {
 		tmp.Normal = normals[v1[2] - 1];
@@ -517,30 +600,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	// std::cout << tmp.Position[0] << ", " << tmp.Position[1] << ", " << tmp.Position[2] << ", " << tmp.Normal[0] << ", " << tmp.Normal[1] << ", " << tmp.Normal[2] << ", " << tmp.TexCoords[0] << ", " << tmp.TexCoords[1] << std::endl;
 
 	tmp.Position = positions[v2[0] - 1];
-	if (v2[1] == 0 || v2[1] > coords.size()) {
-		float tmpX;
-		if (max_x - min_x != 0)
-			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-		else
-			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-		float tmpY;
-		if (max_y - min_y != 0)
-			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-		else
-			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-		// if (!tmpX)
-		// 	tmpX = 0.0f;
-		// if (!tmpY)
-		// 	tmpY = 0.0f;
-		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-		tmp.TexCoords[0] = tex[1];
-		tmp.TexCoords[1] = tex[0];
+	if (v2[1] == -1 || v2[1] > coords.size()) {
+		tmp.TexCoords[0] = 0;
+		tmp.TexCoords[1] = 0;
 	} else {
 		tmp.TexCoords[0] = coords[v2[1] - 1][0];
 		tmp.TexCoords[1] = coords[v2[1] - 1][1];
 	}
-	if (v2[2] == 0 || v2[2] > normals.size()) {
+	if (v2[2] == -1 || v2[2] > normals.size()) {
 		tmp.Normal = norm;
 	} else {
 		tmp.Normal = normals[v2[2] - 1];
@@ -549,30 +616,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	// std::cout << tmp.Position[0] << ", " << tmp.Position[1] << ", " << tmp.Position[2] << ", " << tmp.Normal[0] << ", " << tmp.Normal[1] << ", " << tmp.Normal[2] << ", " << tmp.TexCoords[0] << ", " << tmp.TexCoords[1] << std::endl;
 	
 	tmp.Position = positions[v3[0] - 1];
-	if (v3[1] == 0 || v3[1] > coords.size()) {
-		float tmpX;
-		if (max_x - min_x != 0)
-			tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-		else
-			tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-		float tmpY;
-		if (max_y - min_y != 0)
-			tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-		else
-			tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-		// if (!tmpX)
-		// 	tmpX = 0.0f;
-		// if (!tmpY)
-		// 	tmpY = 0.0f;
-		Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-		tmp.TexCoords[0] = tex[1];
-		tmp.TexCoords[1] = tex[0];
+	if (v3[1] == -1 || v3[1] > coords.size()) {
+		tmp.TexCoords[0] = 0;
+		tmp.TexCoords[1] = 0;
 	} else {
 		tmp.TexCoords[0] = coords[v3[1] - 1][0];
 		tmp.TexCoords[1] = coords[v3[1] - 1][1];
 	}
-	if (v3[2] == 0 || v3[2] > normals.size()) {
+	if (v3[2] == -1 || v3[2] > normals.size()) {
 		tmp.Normal = norm;
 	} else {
 		tmp.Normal = normals[v3[2] - 1];
@@ -583,30 +634,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	if (face4.size()) {
 		
 		tmp.Position = positions[v3[0] - 1];
-		if (v3[1] == 0 || v3[1] > coords.size()) {
-			float tmpX;
-			if (max_x - min_x != 0)
-				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-			else
-				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-			float tmpY;
-			if (max_y - min_y != 0)
-				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-			else
-				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-			if (!tmpX)
-				tmpX = 0.0f;
-			if (!tmpY)
-				tmpY = 0.0f;
-			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-			tmp.TexCoords[0] = tex[1];
-			tmp.TexCoords[1] = tex[0];
+		if (v3[1] == -1 || v3[1] > coords.size()) {
+			tmp.TexCoords[0] = 0;
+			tmp.TexCoords[1] = 0;
 		} else {
 			tmp.TexCoords[0] = coords[v3[1] - 1][0];
 			tmp.TexCoords[1] = coords[v3[1] - 1][1];
 		}
-		if (v3[2] == 0 || v3[2] > normals.size()) {
+		if (v3[2] == -1 || v3[2] > normals.size()) {
 			tmp.Normal = norm;
 		} else {
 			tmp.Normal = normals[v3[2] - 1];
@@ -614,30 +649,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 		vertices.push_back(tmp);
 
 		tmp.Position = positions[v4[0] - 1];
-		if (v4[1] == 0 || v4[1] > coords.size()) {
-			float tmpX;
-			if (max_x - min_x != 0)
-				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-			else
-				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-			float tmpY;
-			if (max_y - min_y != 0)
-				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-			else
-				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-			if (!tmpX)
-				tmpX = 0.0f;
-			if (!tmpY)
-				tmpY = 0.0f;
-			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-			tmp.TexCoords[0] = tex[1];
-			tmp.TexCoords[1] = tex[0];
+		if (v4[1] == -1 || v4[1] > coords.size()) {
+			tmp.TexCoords[0] = 0;
+			tmp.TexCoords[1] = 0;
 		} else {
 			tmp.TexCoords[0] = coords[v4[1] - 1][0];
 			tmp.TexCoords[1] = coords[v4[1] - 1][1];
 		}
-		if (v4[2] == 0 || v4[2] > normals.size()) {
+		if (v4[2] == -1 || v4[2] > normals.size()) {
 			tmp.Normal = norm;
 		} else {
 			tmp.Normal = normals[v4[2] - 1];
@@ -645,30 +664,14 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 		vertices.push_back(tmp);
 
 		tmp.Position = positions[v1[0] - 1];
-		if (v1[1] == 0 || v1[1] > coords.size()) {
-			float tmpX;
-			if (max_x - min_x != 0)
-				tmpX = (tmp.Position[0] - min_x) / (max_x - min_x);
-			else
-				tmpX = (tmp.Position[2] - min_z) / (max_z - min_z);
-			float tmpY;
-			if (max_y - min_y != 0)
-				tmpY = (tmp.Position[1] - min_y) / (max_y - min_y);
-			else
-				tmpY = (tmp.Position[2] - min_z) / (max_z - min_z);
-
-			if (!tmpX)
-				tmpX = 0.0f;
-			if (!tmpY)
-				tmpY = 0.0f;
-			Vector3 tex = Vector3(tmpX, tmpY, 0.0f);
-			tmp.TexCoords[0] = tex[1];
-			tmp.TexCoords[1] = tex[0];
+		if (v1[1] == -1 || v1[1] > coords.size()) {
+			tmp.TexCoords[0] = 0;
+			tmp.TexCoords[1] = 0;
 		} else {
 			tmp.TexCoords[0] = coords[v1[1] - 1][0];
 			tmp.TexCoords[1] = coords[v1[1] - 1][1];
 		}
-		if (v1[2] == 0 || v1[2] > normals.size()) {
+		if (v1[2] == -1 || v1[2] > normals.size()) {
 			tmp.Normal = norm;
 		} else {
 			tmp.Normal = normals[v1[2] - 1];
@@ -677,12 +680,9 @@ void Model::parseToIndice(std::string line, std::vector<Vertex>& vertices, std::
 	// std::cout << tmp.Position[0] << ", " << tmp.Position[1] << ", " << tmp.Position[2] << ", " << tmp.Normal[0] << ", " << tmp.Normal[1] << ", " << tmp.Normal[2] << ", " << (tmp.TexCoords[0] == 0.0f) << ", " << tmp.TexCoords[1] << std::endl;
 	}
 
-	faces.push_back(toInt(face1));
-	faces.push_back(toInt(face2));
-	faces.push_back(toInt(face3));
+	*faces += 3;
 	if (face4.size()) {
-		faces.push_back(toInt(face3));
-		faces.push_back(toInt(face4));
-		faces.push_back(toInt(face1));
+		*faces += 3;
 	}
+	return Tex;
 }

@@ -44,7 +44,7 @@ class Vector4 {
 		Vector4(float x = 0, float y = 0, float z = 0, float w = 0);
 		Vector4(Vector4 const& copy);
 		Vector4(float tab[4]);
-		Vector4(Vector3 const& v, float w = 0);
+		Vector4(Vector3 const& v, float w = 1);
 		~Vector4();
 
 		Vector4&	operator=(Vector4 const &copy);

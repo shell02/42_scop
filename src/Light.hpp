@@ -14,6 +14,7 @@ class Light {
 		Light(Vector3 position = Vector3(0.0f, 2.0f, 2.0f));
 		~Light();
 
+		void clear();
 		void use() const;
 		void draw(Matrix4 view, Matrix4 projection) const;
 
@@ -27,8 +28,11 @@ class Light {
 		void setLightAmb(Vector3 amb);
 		void setLightDiff(Vector3 diff);
 
+		int getErr() const;
+
 	private:
 		unsigned int lightVAO;
+		unsigned int lightVBO;
 
 		Shader lightProgram;
 
@@ -36,4 +40,6 @@ class Light {
 		Vector3	diffuse;
 		Vector3 color;
 		Vector3 position;
+
+		int err;
 };

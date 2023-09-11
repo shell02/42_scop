@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+// #include <unistd.h>
 
 #define GL_LOG_FILE "gl.log"
 #define WIDTH 800
@@ -26,6 +27,10 @@ typedef struct controls {
 	bool textured = false;
 	bool party = false;
 	bool move = false;
+	bool t = false;
+	bool p = false;
+	bool l = false;
+	bool m = false;
 } controls;
 
 // LOG FUNCTIONS

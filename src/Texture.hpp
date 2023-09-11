@@ -19,11 +19,15 @@ class Texture
 		void	bind(void) const;
 
 		unsigned int getID() const;
+		int getErr() const;
+
+		void clear();
 
 
 	private:
 
 		std::string path;
+		int err;
 
 		unsigned int id;
 		int	width;

@@ -15,8 +15,10 @@ float yaw = -90.0f;
 float pitch = 0;
 bool firstMouse = true;
 
-int checkRessources(void) {
+int checkRessources(const char *file) {
 	struct stat sb;
+
+	(void)file;
 
 	if (stat("./assets/kittens.jpg", &sb) != 0) {
 		std::cerr << "Missing file './assets/kittens.jpg\n" << std::endl;
@@ -42,6 +44,42 @@ int checkRessources(void) {
 		std::cerr << "Missing file './shaders/lightShader.vert\n" << std::endl;
 		return 0;
 	}
+    
+	// if (lstat(file, &sb) == 0) {
+	// 	if (S_ISLNK(sb.st_mode)) {
+	// 		char target[250];
+
+	// 		ssize_t ret = readlink(file, target, sizeof(target));
+	// 		if (ret != -1) {
+	// 			target[ret] = '\0';
+	// 			if (stat(target, &sb) == 0) {
+	// 				if (sb.st_size <= 1) {
+	// 					std::cerr << "File appears to be an infinite source or empty." << std::endl;
+	// 					return 0;
+	// 				} 
+	// 			} else {
+	// 				perror("stat");
+	// 				return 0;
+	// 			}
+	// 		} else {
+	// 			perror("readlink");
+	// 			return 0;
+	// 		}
+	// 	} else {
+			if (stat(file, &sb) == 0) {
+				if (sb.st_size <= 1) {
+					std::cerr << "File appears to be an infinite source or empty." << std::endl;
+					return 0;
+				}
+			} else {
+				perror("**ERRORR** :");
+				return 0;
+			}
+	// 	}
+	// } else {
+	// 	perror("lstat");
+	// 	return 0;
+	// }
 	
 	return 1;
 }
@@ -58,12 +96,11 @@ int main(int argc, char **argv)
 	else
 		filename = std::string(argv[1]);
 
-	if (!checkRessources()) {
+	if (!checkRessources(argv[1])) {
 		exit(1);
 	}
 
 	GLFWwindow* window;
-
 
 	if (!glfwInit()) {
 		std::cerr << "ERROR\nCould not start GLFW!" << std::endl;
@@ -113,12 +150,14 @@ int main(int argc, char **argv)
 	}
 
 	Light light;
+	if (light.getErr())
+		exit(1);
 
 	Camera camera;
 
 	Shader program("./shaders/vertexShader.vert", "./shaders/fragmentShader.frag");
-
-	//Handle Mouse Moving 
+	if (program.getErr())
+		exit(1);
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
@@ -126,7 +165,7 @@ int main(int argc, char **argv)
 	float inc = 0.01f;
 	float transMatrix[16];
 
-	Vector3 lightPos(3.0f, 3.0f, 3.0f);
+	Vector3 lightPos(2.0f, 2.0f, 2.0f);
 	Vector3 lightColor(1.0f, 1.0f, 1.0f);
 	
 	Matrix4 projection(1.0f);
@@ -151,7 +190,7 @@ int main(int argc, char **argv)
 		camera.setDeltaTime(deltaTime);
 
 		glEnable(GL_DEPTH_TEST);
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (ctrl.party) {
@@ -181,7 +220,6 @@ int main(int argc, char **argv)
 		program.set3Float("light.diffuse", light.getLightDiff()[0], light.getLightDiff()[1], light.getLightDiff()[2]);
 		program.set3Float("light.specular", 1.0f, 1.0f, 1.0f);
 
-
 		model.draw(program);
 
 		light.draw(view, projection);
@@ -204,13 +242,21 @@ int main(int argc, char **argv)
        		glfwSetWindowShouldClose(window, true);
 		}
 		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+			ctrl.l = true;
+		}
+		if (ctrl.l && glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE) {
 			if (ctrl.wires)
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			else
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			ctrl.wires = ctrl.wires ? false : true;
+			ctrl.l = false;
 		}
+
 		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+			ctrl.t = true;
+		}
+		if (ctrl.t && glfwGetKey(window, GLFW_KEY_T) == GLFW_RELEASE) {
 			if (visual <= 0.0f || visual >= 1.0f) {
 
 				if (inc >= 0.01f)
@@ -219,12 +265,22 @@ int main(int argc, char **argv)
 					inc = 0.01f;
 				visual += inc;
 			}
+			ctrl.t = false;
 
 		}
+
 		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-			ctrl.party = ctrl.party ? false : true;
+			ctrl.p = true;
 		}
+		if (ctrl.p && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE) {
+			ctrl.party = ctrl.party ? false : true;
+			ctrl.p = false;
+		}
+
 		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+			ctrl.m = true;
+		}
+		if (ctrl.m && glfwGetKey(window, GLFW_KEY_M) == GLFW_RELEASE) {
 			if (ctrl.move) {
 				glfwSetCursorPosCallback(window, NULL);
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -234,6 +290,7 @@ int main(int argc, char **argv)
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			}
 			ctrl.move = ctrl.move ? false : true;
+			ctrl.m = false;
 		}
 
 		if (ctrl.move) 
@@ -284,7 +341,12 @@ int main(int argc, char **argv)
 			model.setMove(2, -0.05f);
 	}
 
-	// glDeleteProgram(program.getId());
+	model.clear();
+
+	glDeleteProgram(program.getId());
+	light.clear();
+
+
 	glfwTerminate();
 
 	return 0;

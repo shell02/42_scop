@@ -20,7 +20,7 @@ std::string LoadShaderString(const char* fileName)
 	return shaderText.str();
 }
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath)
+Shader::Shader(const char* vertexPath, const char* fragmentPath) : err(0)
 {
 	reloadShaderFiles(vertexPath, fragmentPath);
 }
@@ -87,6 +87,7 @@ void Shader::reloadShaderFiles(const char* vertexPath, const char* fragmentPath)
 	{
 		glGetShaderInfoLog(vertex, 512, NULL, infoLog);
 		gl_log_err("ERROR: **VERTEX_SHADER** : %s\n", infoLog);
+		err = 1;
 	}
 
 	src = fragmentShaderCode.c_str();
@@ -97,6 +98,7 @@ void Shader::reloadShaderFiles(const char* vertexPath, const char* fragmentPath)
 	{
 		glGetShaderInfoLog(fragment, 512, NULL, infoLog);
 		gl_log_err("ERROR: **FRAGMENT_SHADER** : %s\n", infoLog);
+		err = 1;
 	}
 
 	ID = glCreateProgram();
@@ -108,9 +110,15 @@ void Shader::reloadShaderFiles(const char* vertexPath, const char* fragmentPath)
 	{
 		glGetProgramInfoLog(ID, 512, NULL, infoLog);
 		gl_log_err("ERROR: **PROGRAM_LINKING** : %s\n", infoLog);
+		err = 1;
 	}
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 
+}
+
+int Shader::getErr() const
+{
+	return err;
 }

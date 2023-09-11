@@ -27,7 +27,11 @@ class Shader
 
 		void reloadShaderFiles(const char* vertexPath, const char* fragmentPath);
 
+		int getErr() const;
+
 	private:
 		unsigned int ID;
+
+		int err;
 
 };

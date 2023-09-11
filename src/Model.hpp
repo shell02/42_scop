@@ -28,6 +28,8 @@ class Model {
 
 		int getErr() const;
 
+		void clear();
+
 		std::vector<Mesh> getObjects() const;
 
 	private:
@@ -42,14 +44,17 @@ class Model {
 
 		std::vector<Mesh>	objects;
 
+		float toFloat(std::string line);
+		int toInt(std::string line);
+
 		int checkFile(std::string filename);
 		std::string getOpt(std::string line);
-		std::string rmOpt(std::string line);
-		std::string getArg(std::string line);
+		int rmOpt(std::string &line);
+		std::string getArg(std::string line, int offset);
 		std::map<std::string, MTL> parseMTL(std::string line);
 		Vector3 parseVec3(std::string line);
 		Vector3 parseTexC(std::string line);
 		Vector3 getFace(std::string line);
-		void parseToIndice(std::string line, std::vector<Vertex>& vertices, std::vector<unsigned int>& faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords);
+		bool parseToIndice(std::string line, std::vector<Vertex>& vertices, unsigned int *faces, std::vector<Vector3> &positions, std::vector<Vector3> &normals, std::vector<Vector3> &coords);
 
 };

@@ -5,6 +5,7 @@
 
 Texture::Texture(std::string texturePath, bool flip) : path(texturePath)
 {
+	err =0;
 	if (flip)
 		stbi_set_flip_vertically_on_load(true);
 
@@ -29,6 +30,7 @@ Texture::Texture(std::string texturePath, bool flip) : path(texturePath)
 	else
 	{
 		gl_log_err("ERROR: **TEXTURE**: Failed to load image at %s\n", texturePath.c_str());
+		err = 1;
 	}
 	stbi_image_free(data);
 
@@ -68,4 +70,14 @@ void Texture::bind(void) const
 unsigned int Texture::getID() const
 {
 	return id;
+}
+
+int Texture::getErr() const
+{
+	return err;
+}
+
+void Texture::clear()
+{
+	glDeleteTextures(1, &id);
 }

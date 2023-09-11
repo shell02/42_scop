@@ -36,6 +36,8 @@ class MTL {
 		float getTr() const;
 		bool getIsTextured() const;
 
+		void clear();
+
 	private:
 		Texture diffuse;
 		Texture specular;

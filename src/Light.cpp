@@ -45,12 +45,15 @@ float vertices[] = {
     -0.5f,  0.5f, -0.5f
 };
 
-Light::Light(Vector3 position) : lightProgram(Shader("./shaders/lightShader.vert", "./shaders/lightShader.frag")), position(position)
+Light::Light(Vector3 position) : lightProgram(Shader("./shaders/lightShader.vert", "./shaders/lightShader.frag")), position(position), err(0)
 {
+    if (lightProgram.getErr()) {
+        err = 1;
+        return ;
+    }
 	glGenVertexArrays(1, &lightVAO);
 	glBindVertexArray(lightVAO);
 
-	unsigned int lightVBO;
 	glGenBuffers(1, &lightVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -60,17 +63,18 @@ Light::Light(Vector3 position) : lightProgram(Shader("./shaders/lightShader.vert
 
 	color = Vector3(1.0f, 1.0f, 1.0f);
 	ambient = Vector3(0.2f, 0.2f, 0.2f);
-	diffuse = Vector3(0.2f, 0.2f, 0.2f);
+	diffuse = Vector3(0.4f, 0.4f, 0.4f);
 	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glDeleteBuffers(1, &lightVBO);
 }
 
-Light::~Light()
-{
-    // glDeleteProgram(lightProgram.getId());
-    // glDeleteVertexArrays(1, &lightVAO);
+Light::~Light() {}
+
+void Light::clear() {
+    glDeleteProgram(lightProgram.getId());
+    glDeleteBuffers(1, &lightVBO);
+    glDeleteVertexArrays(1, &lightVAO);
 }
 
 void Light::use() const
@@ -128,6 +132,13 @@ void Light::setLightPos(Vector3 pos)
 void Light::setLightColor(Vector3 col)
 {
 	color = col;
+    if (color[0] == 1.0f && color[1] == 1.0f && color[2] == 1.0f) {
+        // setLightAmb(Vector3(0.2f, 0.2f, 0.2f));
+        setLightDiff(Vector3(0.4f, 0.4f, 0.4f));
+    } else {
+        setLightDiff(color.mulScalar(0.2f));
+        // setLightAmb(color.mulScalar(0.4f));
+    }
 }
 
 void Light::setLightAmb(Vector3 amb)
@@ -138,4 +149,9 @@ void Light::setLightAmb(Vector3 amb)
 void Light::setLightDiff(Vector3 diff)
 {
 	diffuse = diff;
+}
+
+int Light::getErr() const
+{
+    return err;
 }
