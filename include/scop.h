@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
-// #include <unistd.h>
+#include <unistd.h>
 
 #define GL_LOG_FILE "gl.log"
 #define WIDTH 800
