@@ -84,7 +84,8 @@ void Light::use() const
 
 void Light::draw(Matrix4 view, Matrix4 projection) const
 {
-	Matrix4 lightModel = lightModel.model(lightModel.translation(position), lightModel.scale(Vector3(0.2f, 0.2f, 0.2f)));;
+	Matrix4 lightModel;
+    lightModel = lightModel.model(lightModel.translation(position), lightModel.scale(Vector3(0.2f, 0.2f, 0.2f)));;
 	float transMatrix[16];
 
 	lightProgram.use();

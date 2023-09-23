@@ -90,7 +90,7 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 				opt = getOpt(line);
 				if (opt.size() == 0) {
 					err = 1;
-					gl_log_err("**ERROR1**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
 					break ;
 				}
 
@@ -139,7 +139,7 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 					}
 					else {
 						if (texturesNames.find(line) == texturesNames.end()) {
-							gl_log_err("**ERROR** : Material name does not exist : line %s\n", line.c_str());
+							gl_log_err("**ERROR** : Material name does not exist : line : %s\n", line.c_str());
 							err = 1;
 						}
 						else
@@ -155,18 +155,23 @@ Model::Model(std::string filename) : err(0), minX(0.0f), minY(0.0f), maxX(0.0f),
 					//pass
 				}
 				else {
-					gl_log_err("**ERROR2**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
 					err = 1;
 					return ;
 				}
 
 				if (err == 1) {
-					gl_log_err("**ERROR3**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line %d: %s\n", filename.c_str(), idx, line.c_str());
 					return ;
 				}
 			}
 		}
 		file.close();
+		if (faces == 0) {
+			gl_log_err("**ERROR**: No faces provided to draw the model\n");
+			err = 1;
+			return ;
+		}
 		objects[objects.size() - 1].indices.push_back(faces);
 
 		if (objects[objects.size() - 1].textures.size() == 0)
@@ -231,7 +236,12 @@ std::vector<Mesh> Model::getObjects() const
 
 int Model::checkFile(std::string filename)
 {
-	std::string line = filename.substr(filename.find_last_of("."));
+	size_t dot = filename.find_last_of(".");
+	if (dot == std::string::npos) {
+		gl_log_err("**ERROR**: Please provide a file ending in .obj\n");
+		return 0;
+	}
+	std::string line = filename.substr(dot);
 
 	if (line != ".obj") {
 		gl_log_err("**ERROR**: Please provide a file ending in .obj\n");
@@ -315,7 +325,7 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 				opt = getOpt(line);
 				if (opt.size() == 0) {
 					err = 1;
-					gl_log_err("**ERROR4**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
 					return textures ;
 				}
 
@@ -367,13 +377,13 @@ std::map<std::string, MTL> Model::parseMTL(std::string line)
 					//pass
 				}
 				else {
-					gl_log_err("**ERROR5**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
 					err = 1;
 					return textures;
 				}
 
 				if (err == 1) {
-					gl_log_err("**ERROR6**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
+					gl_log_err("**ERROR**: Parsing error in file %s: line: %s\n", filename.c_str(), line.c_str());
 					return textures;
 				}
 			}

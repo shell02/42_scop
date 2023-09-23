@@ -57,6 +57,10 @@ int checkRessources(const char *file) {
 						std::cerr << "File appears to be an infinite source or empty." << std::endl;
 						return 0;
 					} 
+					if (!(sb.st_mode & S_IFREG)) {
+						std::cerr << "Please provide a file." << std::endl;
+						return 0;
+					}
 				} else {
 					perror("stat");
 					return 0;
@@ -71,8 +75,12 @@ int checkRessources(const char *file) {
 					std::cerr << "File appears to be an infinite source or empty." << std::endl;
 					return 0;
 				}
+				if (!(sb.st_mode & S_IFREG)) {
+					std::cerr << "Please provide a file." << std::endl;
+					return 0;
+				}
 			} else {
-				perror("**ERRORR** :");
+				perror("**ERROR** :");
 				return 0;
 			}
 		}

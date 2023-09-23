@@ -11,7 +11,6 @@
 class MTL {
 	public:
 		MTL();
-		MTL(MTL const& copy);
 
 		void setDiffuseTex(Texture diffuse);
 		void setSpecTex(Texture specular);

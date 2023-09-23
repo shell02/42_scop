@@ -302,10 +302,10 @@ void Mesh::setupMesh()
 		if (textures[idx].getIsTextured() == false) {
 		
 			for (size_t i = 0; i * 3 < *it; i++) {
-				float random =  -0.4f + static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 0.8f);
+				float random =  -1.0f + static_cast <float> (rand()) / static_cast <float> ((float)RAND_MAX / 2.0f);
 
-				colorsA.push_back(Vector3(textures[idx].getAmbient()[0] + random, textures[idx].getAmbient()[1] + random, textures[idx].getAmbient()[2] + random));
-				colorsD.push_back(Vector3(textures[idx].getDiff()[0] + random, textures[idx].getDiff()[1] + random, textures[idx].getDiff()[2] + random));
+				colorsA.push_back(Vector3(textures[idx].getAmbient()[0] + random, textures[idx].getAmbient()[1] - random, textures[idx].getAmbient()[2]));
+				colorsD.push_back(Vector3(textures[idx].getDiff()[0] + random, textures[idx].getDiff()[1] - random, textures[idx].getDiff()[2]));
 				// std::cout << "Color[0]: " << textures[idx].getAmbient()[0] << " Color[1]: " << textures[idx].getAmbient()[1] << " Color[2]: " << textures[idx].getAmbient()[2] << std::endl;
 			}
 		}

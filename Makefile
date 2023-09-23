@@ -15,11 +15,11 @@ mkObjDir:
 
 $(NAME): $(OBJS)
 	@printf "\e[0;32mDone compiling objects!            \n\e[0m"
-	@$(CC) $(CFLAGS) $(OBJS) ./src/glad.c -o $(NAME) -I$(INCLUDE) -L$(LIB)
+	@$(CC) $(CFLAGS) $(OBJS) ./src/glad.cpp -o $(NAME) -L $(LIB) -I$(INCLUDE)
 	@echo "\e[0;32mProgram" $(NAME) "successfully created!\e[0m"
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
-	@$(CC) $(CFLAGS) -c $< -o $@ -I$(INCLUDE) -L$(LIB)
+	@$(CC) $(CFLAGS) -c $< -o $@ -I$(INCLUDE)
 	@printf "\e[0;32mCompiling $@...        \e[0m\r"
 
 clean:

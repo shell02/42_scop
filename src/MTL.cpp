@@ -12,16 +12,6 @@ MTL::MTL() : diffuse(Texture("./assets/kittens.jpg", true)), specular(Texture(".
 	isTextured = false;
 }
 
-MTL::MTL(MTL const& copy) : diffuse(copy.diffuse), specular(copy.specular)
-{
-	this->ambient = copy.ambient;
-	this->diff = copy.diff;
-	this->spec = copy.spec;
-	this->shininess = copy.shininess;
-	this->transparency = copy.transparency;
-	this->isTextured = copy.isTextured;
-}
-
 void MTL::setDiffuseTex(Texture diffuse)
 {
 	// unsigned int id = this->diffuse.getID();
